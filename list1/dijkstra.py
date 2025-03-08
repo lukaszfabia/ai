@@ -12,6 +12,12 @@ class Dijkstra(SearchEngine):
     def __init__(self, g: Graph):
         super().__init__(g)
 
+    def cost_strategy(self, new_cost, **kwargs):
+        return new_cost
+
+    def __str__(self):
+        return "Dijkstra"
+
     @check_time
     @print_road
     def search(self, start_point: str, end_point: str, start_time: time):
@@ -57,7 +63,8 @@ class Dijkstra(SearchEngine):
                     or new_cost < cost_so_far[next_edge.end_node]
                 ):
                     cost_so_far[next_edge.end_node] = new_cost
-                    heapq.heappush(frontier, (new_cost, next_edge.end_node))
+                    priority = self.cost_strategy(new_cost=new_cost)
+                    heapq.heappush(frontier, (priority, next_edge.end_node))
                     came_from[next_edge.end_node.name] = next_edge
 
             if frontier:
@@ -72,5 +79,5 @@ class Dijkstra(SearchEngine):
             how_many,
             current_time,
             start_time,
-            "Dijkstra",
+            self.__str__(),
         )

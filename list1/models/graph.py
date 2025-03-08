@@ -119,19 +119,3 @@ def to_minutes(t: str | time) -> int:
         return 60 * t.hour + t.minute
 
     return 0
-
-
-def manhattan_heuristic(a: Node, b: Node) -> int:
-    return int((abs(a.latitude - b.latitude) + abs(a.longitude - b.longitude)) * 1000)
-
-
-def euklides_heuristic(a: Node, b: Node) -> int:
-    return int(
-        math.sqrt(
-            (
-                math.pow(a.latitude - b.latitude, 2)
-                + math.pow(a.longitude - b.longitude, 2)
-            )
-        )
-        * 1000
-    )
