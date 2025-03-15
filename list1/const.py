@@ -1,1 +1,2 @@
 DATE_FORMAT = "%H:%M:%S"
+PENATLY = 500

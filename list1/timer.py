@@ -7,11 +7,14 @@ def check_time(func):
     def aux(*args, **kwargs):
         s = time()
 
-        func(*args, **kwargs)
+        res = func(*args, **kwargs)
+
         e = time()
 
         elapsed_time = (e - s) * 1000
         print(f"It took: {elapsed_time:.2f} ms")
+
+        return res
 
     return aux
 

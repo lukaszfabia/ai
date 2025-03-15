@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 import pandas as pd
 from pathlib import Path
 from const import DATE_FORMAT
@@ -10,6 +10,12 @@ def minutes_to_hms(minutes: int) -> str:
     hours = minutes // 60
     minutes = minutes % 60
     return (datetime.min + timedelta(hours=hours, minutes=minutes)).strftime("%H:%M:%S")
+
+
+def add_minutes_to_time(t: time, minutes: int) -> time:
+    dummy_date = datetime(1970, 1, 1, t.hour, t.minute)
+    new_time = dummy_date + timedelta(minutes=minutes)
+    return new_time.time()
 
 
 def get_df(path: Path = Path("./connection_graph.csv")) -> pd.DataFrame:

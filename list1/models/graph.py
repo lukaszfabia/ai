@@ -1,8 +1,9 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from datetime import time
 from dataclasses import dataclass
 from geopy import Point
-import math
+
+from const import PENATLY
 
 
 @dataclass(frozen=True)
@@ -85,14 +86,12 @@ class Graph:
 
         return result
 
-    def line_change_cost(self, edge: Edge, next_edge: Edge) -> int:
-        cost = 0
-        if edge and next_edge and edge.line != next_edge.line:
-            # penatly
-            cost = 100
-        return cost
+    def line_change_cost(self, edge: Optional[Edge], next_edge: Edge) -> int:
+        if edge is not None and edge.line != next_edge.line:
+            return PENATLY
+        return 0
 
-    def merged_neighbour_edges_for_start_node(
+    def available_edges_from(
         self, start_node: Node, current_time: time | str
     ) -> List[Edge]:
         curr: int = to_minutes(current_time)

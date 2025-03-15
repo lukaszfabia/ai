@@ -1,83 +1,72 @@
-from datetime import time
-import heapq
-from models.graph import Graph
-from printer import print_road
+from models.graph import Graph, Node
 from search import SearchEngine
-from timer import check_time
-from typing import Optional, Dict
-from models.graph import Node, Edge
+
+import numpy as np
 
 
-class AStar(SearchEngine):
+def compute_angle(current: Node, next_node: Node, goal):
+    v1 = np.array(
+        [
+            next_node.coords.longitude - current.coords.longitude,
+            next_node.coords.latitude - current.coords.latitude,
+        ]
+    )
+    v2 = np.array(
+        [
+            goal.coords.longitude - current.coords.longitude,
+            goal.coords.latitude - current.coords.latitude,
+        ]
+    )
+
+    norm_v1 = np.linalg.norm(v1)
+    norm_v2 = np.linalg.norm(v2)
+
+    if norm_v1 == 0 or norm_v2 == 0:
+        return 0
+
+    cos_theta = np.dot(v1, v2) / (norm_v1 * norm_v2)
+    angle = np.degrees(np.arccos(np.clip(cos_theta, -1.0, 1.0)))
+
+    return angle
+
+
+def compute_angle_penalty(angle):
+    if angle < 45:
+        return 0
+    elif angle < 90:
+        return 100
+    elif angle < 135:
+        return 300
+    else:
+        return 500
+
+
+class AStarMinTime(SearchEngine):
 
     def __init__(self, g: Graph):
         super().__init__(g)
 
-    @check_time
-    @print_road
-    def search(self, start_point, end_point, start_time):
-        """Find the best path by **minimizing time** using the A* algorithm.
-
-        Args:
-            start_point (str): Start stop, e.g., "Wyszyńskiego".
-            end_point (str): End stop, e.g., "PL. GRUNWALDZKI".
-            start_time (time): Describes the time when you arrive at the bus stop.
-
-        """
-        start_node = self.graph.nodes[start_point]
-        end_node = self.graph.nodes[end_point]
-
-        frontier = []
-        heapq.heappush(frontier, (0, start_node))
-        came_from: Dict[str, Optional[Edge]] = {}
-        cost_so_far: Dict[Node, int] = {}
-        came_from[start_node.name] = None
-        cost_so_far[start_node] = 0
-
-        how_many = 0
-        current_time = start_time
-
-        while frontier:
-            _, current_node = heapq.heappop(frontier)
-
-            if current_node == end_node:
-                break
-
-            for next_edge in self.graph.merged_neighbour_edges_for_start_node(
-                current_node, current_time
-            ):
-                how_many += 1
-                new_cost = cost_so_far[current_node] + self.graph.compute_cost(
-                    next_edge, current_time
-                )
-
-                if (
-                    next_edge.end_node not in cost_so_far
-                    or new_cost < cost_so_far[next_edge.end_node]
-                ):
-                    cost_so_far[next_edge.end_node] = new_cost
-                    priority = self.cost_strategy(
-                        new_cost=new_cost,
-                        end_node=end_node,
-                        next_end_node=next_edge.end_node,
-                    )
-                    heapq.heappush(frontier, (priority, next_edge.end_node))
-                    came_from[next_edge.end_node.name] = next_edge
-
-            if frontier:
-                next_node = frontier[0][1]
-                if next_node.name in came_from and came_from[next_node.name]:
-                    current_time = came_from[next_node.name].arrival_time
-
-        return (
-            end_node,
-            came_from,
-            cost_so_far,
-            how_many,
-            current_time,
-            start_time,
-            self.__str__(),
+    def choose_path_strategy(
+        self,
+        cost_so_far,
+        current_node,
+        next_edge,
+        current_time,
+        came_from,
+        end_node,
+    ):
+        new_cost = cost_so_far[current_node] + self.graph.compute_cost(
+            next_edge, current_time
         )
+
+        if self.is_worth(next_edge.end_node, cost_so_far, new_cost):
+            cost_so_far[next_edge.end_node] = new_cost
+            priority = self.cost_strategy(
+                new_cost=new_cost,
+                end_node=end_node,
+                next_end_node=next_edge.end_node,
+            )
+            return priority
 
     def cost_strategy(self, new_cost, **kwargs):
         return new_cost + self._geo_heuristic(
@@ -85,30 +74,94 @@ class AStar(SearchEngine):
         )
 
     def __str__(self):
-        return "A*"
+        return __class__.__name__.__str__()
 
 
-class AStarMutated(SearchEngine):
+class AStarMinTransfers(SearchEngine):
 
     def __init__(self, g):
         super().__init__(g)
 
+    def __str__(self):
+        return __class__.__name__.__str__()
+
     def cost_strategy(self, new_cost, **kwargs):
         return new_cost + self._geo_heuristic(
             a=kwargs["end_node"], b=kwargs["next_end_node"]
         )
 
+    def choose_path_strategy(
+        self,
+        cost_so_far,
+        current_node,
+        next_edge,
+        current_time,
+        came_from,
+        end_node,
+    ):
+        new_cost = (
+            cost_so_far[current_node]
+            + self.graph.compute_cost(next_edge, current_time)
+            + self.graph.line_change_cost(
+                edge=came_from[current_node.name], next_edge=next_edge
+            )
+        )
+
+        if self.is_worth(next_edge.end_node, cost_so_far, new_cost):
+            cost_so_far[next_edge.end_node] = new_cost
+            priority = self.cost_strategy(
+                new_cost=new_cost,
+                end_node=end_node,
+                next_end_node=next_edge.end_node,
+            )
+            return priority
+
+
+class AStarModified(SearchEngine):
+
+    def __init__(self, g):
+        super().__init__(g)
+
     def __str__(self):
-        return "A*"
+        return __class__.__name__.__str__()
 
-    @check_time
-    @print_road
-    def search(self, start_point, end_point, start_time):
-        """Minimize amount of transfers
+    def cost_strategy(self, new_cost, **kwargs):
+        angle = compute_angle(
+            current=kwargs["current_node"],
+            next_node=kwargs["next_end_node"],
+            goal=kwargs["end_node"],
+        )
+        angle_penalty = compute_angle_penalty(angle)
+        priority = (
+            new_cost
+            + self._geo_heuristic(a=kwargs["end_node"], b=kwargs["next_end_node"])
+            + angle_penalty
+        )
+        return priority
 
-        Args:
-            start_point (str): Start stop, e.g., "Wyszyńskiego".
-            end_point (str): End stop, e.g., "PL. GRUNWALDZKI".
-            start_time (time): Describes the time when you arrive at the bus stop.
+    def choose_path_strategy(
+        self,
+        cost_so_far,
+        current_node,
+        next_edge,
+        current_time,
+        came_from,
+        end_node,
+    ):
+        new_cost = (
+            cost_so_far[current_node]
+            + self.graph.compute_cost(next_edge, current_time)
+            + self.graph.line_change_cost(
+                edge=came_from[current_node.name], next_edge=next_edge
+            )
+        )
 
-        """
+        if self.is_worth(next_edge.end_node, cost_so_far, new_cost):
+            cost_so_far[next_edge.end_node] = new_cost
+            priority = self.cost_strategy(
+                new_cost=new_cost,
+                end_node=end_node,
+                next_end_node=next_edge.end_node,
+                current_node=current_node,
+            )
+            return priority

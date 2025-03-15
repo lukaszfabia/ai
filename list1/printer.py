@@ -44,6 +44,14 @@ def print_road(func):
         print(f"Total visited nodes: {how_many}")
         print("=" * 80 + "\n")
 
-        return end_node, came_from, cost_so_far, how_many, current_time, start_time
+        return (
+            end_node,
+            came_from,
+            cost_so_far,
+            how_many,
+            current_time,
+            start_time,
+            total_time,
+        )
 
     return wrapper
