@@ -13,7 +13,7 @@ def minutes_to_hms(minutes: int) -> str:
 
 
 def add_minutes_to_time(t: time, minutes: int) -> time:
-    dummy_date = datetime(1970, 1, 1, t.hour, t.minute)
+    dummy_date = datetime(1900, 1, 1, t.hour, t.minute)
     new_time = dummy_date + timedelta(minutes=minutes)
     return new_time.time()
 

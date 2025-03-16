@@ -69,23 +69,33 @@ class SearchEngine(ABC):
             if current_node == end_node:
                 break
 
-            if current_node.name in came_from and came_from[current_node.name]:
-                current_time = came_from[current_node.name].arrival_time
-
             for next_edge in self.graph.available_edges_from(
                 current_node, current_time
             ):
                 how_many += 1
-                if priority := self.choose_path_strategy(
-                    cost_so_far=cost_so_far,
-                    current_node=current_node,
-                    next_edge=next_edge,
-                    current_time=current_time,
-                    came_from=came_from,
-                    end_node=end_node,
-                ):
+
+                new_cost = cost_so_far[current_node] + self.graph.compute_cost(
+                    next_edge, current_time
+                )
+
+                if self.is_worth(next_edge.end_node, cost_so_far, new_cost):
+                    cost_so_far[next_edge.end_node] = new_cost
+
+                    priority = self.choose_path_strategy(
+                        cost_so_far=cost_so_far,
+                        current_node=current_node,
+                        next_edge=next_edge,
+                        current_time=current_time,
+                        came_from=came_from,
+                        end_node=end_node,
+                    )
                     heapq.heappush(frontier, (priority, next_edge.end_node))
                     came_from[next_edge.end_node.name] = next_edge
+
+            if frontier:
+                next_node = frontier[0][1]
+                if next_node.name in came_from and came_from[next_node.name]:
+                    current_time = came_from[next_node.name].arrival_time
 
         return (
             end_node,

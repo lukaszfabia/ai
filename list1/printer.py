@@ -13,9 +13,9 @@ def print_road(func):
         )
 
         final_list: List[Edge] = []
-        print("\n" + "=" * 80)
+        print("\n" + "=" * 100)
         print(f"Results for {algo}:")
-        print("=" * 80)
+        print("=" * 100)
 
         print(
             "Line".ljust(6)
@@ -25,7 +25,7 @@ def print_road(func):
             + "End Stop".ljust(30)
             + "Cost".ljust(10)
         )
-        print("-" * 80)
+        print("-" * 100)
 
         current = end_node
         while current.name in came_from and came_from[current.name]:
@@ -37,12 +37,11 @@ def print_road(func):
 
         for edge in final_list:
             print(edge, f"{str(cost_so_far[edge.end_node]).ljust(10)}")
-
         total_time = to_minutes(current_time) - to_minutes(start_time)
-        print("-" * 80)
+        print("-" * 100)
         print(f"\nTotal time ({algo}): {minutes_to_hms(total_time)}")
         print(f"Total visited nodes: {how_many}")
-        print("=" * 80 + "\n")
+        print("=" * 100 + "\n")
 
         return (
             end_node,

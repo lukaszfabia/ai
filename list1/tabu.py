@@ -1,3 +1,4 @@
+from collections import deque
 from datetime import time
 import random
 from typing import List, Optional
@@ -95,61 +96,88 @@ class Tabu:
         )
         curr_time = add_minutes_to_time(curr_time, res[-1])
 
-    def _tabu_search(
-        self, tabu_list, tabu_length=None, aspiration=False, sample_size=None
-    ):
+    def _initialize_search(self, tabu_length):
+        tabu_list = deque(maxlen=tabu_length)
         current_solution = self._generate_init_solution()
         best_solution = current_solution
         best_cost = self._compute_cost(best_solution)
+        return tabu_list, current_solution, best_solution, best_cost
+
+    def _evaluate_neighbors(self, neighbors, tabu_list, best_cost, aspiration):
+        best_neighbor, best_neighbor_cost = None, float("inf")
+
+        for neighbor in neighbors:
+            neighbor_cost = self._compute_cost(neighbor)
+
+            if aspiration and (neighbor not in tabu_list or neighbor_cost < best_cost):
+                if neighbor_cost < best_neighbor_cost:
+                    best_neighbor, best_neighbor_cost = neighbor, neighbor_cost
+            elif neighbor not in tabu_list and neighbor_cost < best_neighbor_cost:
+                best_neighbor, best_neighbor_cost = neighbor, neighbor_cost
+
+        return best_neighbor, best_neighbor_cost
+
+    def _adjust_tabu_length(
+        self, tabu_length, best_neighbor_cost, best_cost, min_tabu=5, max_tabu=20
+    ):
+        if best_neighbor_cost >= best_cost:
+            return min(max_tabu, tabu_length + 1)
+        return max(min_tabu, tabu_length - 1)
+
+    def _tabu_search(
+        self, tabu_length=10, aspiration=True, sample_size=None, max_no_improve=10
+    ):
+        tabu_list, current_solution, best_solution, best_cost = self._initialize_search(
+            tabu_length
+        )
+        no_improve_count = 0
 
         for _ in range(self.max_iter):
             neighbors = self._generate_neighbors(current_solution)
+            if not neighbors:
+                break
 
-            # sampling
-            if sample_size is not None:
+            if sample_size:
                 neighbors = random.sample(neighbors, min(sample_size, len(neighbors)))
 
-            best_neighbor = None
-            best_neighbor_cost = float("inf")
+            best_neighbor, best_neighbor_cost = self._evaluate_neighbors(
+                neighbors, tabu_list, best_cost, aspiration
+            )
 
-            for neighbor in neighbors:
-                neighbor_cost = self._compute_cost(neighbor)
-                if aspiration and (
-                    neighbor not in tabu_list or neighbor_cost < best_cost
-                ):
-                    if neighbor_cost < best_neighbor_cost:
-                        best_neighbor = neighbor
-                        best_neighbor_cost = neighbor_cost
-                elif neighbor not in tabu_list:
-                    if neighbor_cost < best_neighbor_cost:
-                        best_neighbor = neighbor
-                        best_neighbor_cost = neighbor_cost
+            if best_neighbor is None:
+                best_neighbor = random.choice(neighbors)
+                best_neighbor_cost = self._compute_cost(best_neighbor)
 
-            if best_neighbor is not None:
-                current_solution = best_neighbor
-                tabu_list.append(best_neighbor)
+            current_solution = best_neighbor
+            tabu_list.append(best_neighbor)
+            tabu_length = self._adjust_tabu_length(
+                tabu_length, best_neighbor_cost, best_cost
+            )
 
-                if tabu_length is not None and len(tabu_list) > tabu_length:
-                    tabu_list.pop(0)
+            if best_neighbor_cost < best_cost:
+                best_solution, best_cost = best_neighbor, best_neighbor_cost
+                no_improve_count = 0
+            else:
+                no_improve_count += 1
 
-                if best_neighbor_cost < best_cost:
-                    best_solution = best_neighbor
-                    best_cost = best_neighbor_cost
+            if no_improve_count >= max_no_improve:
+                current_solution = self._generate_init_solution()
+                no_improve_count = 0
 
         return best_solution
 
     @check_time
     def search(self):
-        return self._tabu_search(tabu_list=[])
+        return self._tabu_search()
 
     @check_time
     def dynamic_search(self):
-        return self._tabu_search(tabu_list=[], tabu_length=10)
+        return self._tabu_search(tabu_length=10)
 
     @check_time
     def aspiration_search(self):
-        return self._tabu_search(tabu_list=[], aspiration=True)
+        return self._tabu_search(aspiration=True)
 
     @check_time
     def sampling_search(self, sample: Optional[int] = 40):
-        return self._tabu_search(tabu_list=[], sample_size=sample)
+        return self._tabu_search(sample_size=sample)
