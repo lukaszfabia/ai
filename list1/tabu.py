@@ -107,6 +107,9 @@ class Tabu:
         best_neighbor, best_neighbor_cost = None, float("inf")
 
         for neighbor in neighbors:
+            if neighbor[-1] == self.src:
+                continue
+
             neighbor_cost = self._compute_cost(neighbor)
 
             if aspiration and (neighbor not in tabu_list or neighbor_cost < best_cost):

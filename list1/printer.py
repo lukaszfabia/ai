@@ -12,6 +12,17 @@ def print_road(func):
             func(*args, **kwargs)
         )
 
+        if 0 <= len(came_from) <= 1:
+            return (
+                end_node,
+                came_from,
+                cost_so_far,
+                how_many,
+                current_time,
+                start_time,
+                0,
+            )
+
         final_list: List[Edge] = []
         print("\n" + "=" * 100)
         print(f"Results for {algo}:")
