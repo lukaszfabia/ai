@@ -1,7 +1,12 @@
-from models.graph import Graph, Node
+import heapq
+from typing import Dict, Optional
+from models.graph import Edge, Graph, Node
+from printer import print_road
 from search import SearchEngine
 
 import numpy as np
+
+from timer import check_time
 
 
 def compute_angle(current: Node, next_node: Node, goal):
@@ -59,14 +64,13 @@ class AStarMinTime(SearchEngine):
             next_edge, current_time
         )
 
-        if self.is_worth(next_edge.end_node, cost_so_far, new_cost):
-            cost_so_far[next_edge.end_node] = new_cost
-            priority = self.cost_strategy(
-                new_cost=new_cost,
-                end_node=end_node,
-                next_end_node=next_edge.end_node,
-            )
-            return priority
+        cost_so_far[next_edge.end_node] = new_cost
+        priority = self.cost_strategy(
+            new_cost=new_cost,
+            end_node=end_node,
+            next_end_node=next_edge.end_node,
+        )
+        return priority
 
     def cost_strategy(self, new_cost, **kwargs):
         return new_cost + self._geo_heuristic(
@@ -107,14 +111,13 @@ class AStarMinTransfers(SearchEngine):
             )
         )
 
-        if self.is_worth(next_edge.end_node, cost_so_far, new_cost):
-            cost_so_far[next_edge.end_node] = new_cost
-            priority = self.cost_strategy(
-                new_cost=new_cost,
-                end_node=end_node,
-                next_end_node=next_edge.end_node,
-            )
-            return priority
+        cost_so_far[next_edge.end_node] = new_cost
+        priority = self.cost_strategy(
+            new_cost=new_cost,
+            end_node=end_node,
+            next_end_node=next_edge.end_node,
+        )
+        return priority
 
 
 class AStarModified(SearchEngine):
@@ -156,12 +159,11 @@ class AStarModified(SearchEngine):
             )
         )
 
-        if self.is_worth(next_edge.end_node, cost_so_far, new_cost):
-            cost_so_far[next_edge.end_node] = new_cost
-            priority = self.cost_strategy(
-                new_cost=new_cost,
-                end_node=end_node,
-                next_end_node=next_edge.end_node,
-                current_node=current_node,
-            )
-            return priority
+        cost_so_far[next_edge.end_node] = new_cost
+        priority = self.cost_strategy(
+            new_cost=new_cost,
+            end_node=end_node,
+            next_end_node=next_edge.end_node,
+            current_node=current_node,
+        )
+        return priority

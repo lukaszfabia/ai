@@ -28,7 +28,6 @@ class Dijkstra(SearchEngine):
             next_edge, current_time
         )
 
-        if self.is_worth(next_edge.end_node, cost_so_far, new_cost):
-            cost_so_far[next_edge.end_node] = new_cost
-            priority = self.cost_strategy(new_cost=new_cost)
-            return priority
+        cost_so_far[next_edge.end_node] = new_cost
+        priority = self.cost_strategy(new_cost=new_cost)
+        return priority

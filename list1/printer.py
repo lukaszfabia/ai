@@ -24,19 +24,20 @@ def print_road(func):
             )
 
         final_list: List[Edge] = []
-        print("\n" + "=" * 100)
+        print("\n" + "=" * 70)
         print(f"Results for {algo}:")
-        print("=" * 100)
+        print("=" * 70)
 
         print(
             "Line".ljust(6)
             + "Departure".ljust(12)
-            + "Start Stop".ljust(30)
+            + "Start Stop".ljust(15)
             + "Arrival".ljust(12)
-            + "End Stop".ljust(30)
-            + "Cost".ljust(10)
+            + "End Stop".ljust(15)
+            + "Cost".ljust(6)
         )
-        print("-" * 100)
+
+        print("-" * 70)
 
         current = end_node
         while current.name in came_from and came_from[current.name]:
@@ -47,12 +48,12 @@ def print_road(func):
         final_list.reverse()
 
         for edge in final_list:
-            print(edge, f"{str(cost_so_far[edge.end_node]).ljust(10)}")
+            print(edge, f"{str(cost_so_far[edge.end_node]).ljust(6)}")
         total_time = to_minutes(current_time) - to_minutes(start_time)
-        print("-" * 100)
+        print("-" * 70)
         print(f"\nTotal time ({algo}): {minutes_to_hms(total_time)}")
         print(f"Total visited nodes: {how_many}")
-        print("=" * 100 + "\n")
+        print("=" * 70 + "\n")
 
         return (
             end_node,

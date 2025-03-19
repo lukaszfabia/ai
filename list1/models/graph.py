@@ -21,9 +21,9 @@ class Edge:
         return (
             f"{self.line[:3].ljust(6)}"
             f"{str(self.departure_time).ljust(12)}"
-            f"{self.start_node.name[:26].ljust(30)}"
+            f"{self.start_node.name[:12].ljust(15)}"
             f"{str(self.arrival_time).ljust(12)}"
-            f"{self.end_node.name[:26].ljust(30)}"
+            f"{self.end_node.name[:12].ljust(15)}"
         )
 
 
