@@ -2,9 +2,10 @@ from collections import deque
 from datetime import time
 import random
 from typing import List, Optional
+from const import PENATLY
 from models.graph import Graph
 from timer import check_time
-from a import AStarMinTime, AStarMinTransfers
+from a import AStarMinTime, AStarMinTransfers, AStarModified
 from parser import add_minutes_to_time
 
 
@@ -71,7 +72,7 @@ class Tabu:
                 cost += self.graph.compute_cost(edge, current_time)
             else:
                 if current_line is not None and edge.line != current_line:
-                    cost += 1
+                    cost += PENATLY
                 current_line = edge.line
 
         return cost
@@ -80,9 +81,11 @@ class Tabu:
         curr_time = self.time
         curr_stop = self.src
 
-        engine = (
-            AStarMinTime(self.graph) if self.min_time else AStarMinTransfers(self.graph)
-        )
+        # engine = (
+        #     AStarMinTime(self.graph) if self.min_time else AStarMinTransfers(self.graph)
+        # )
+
+        engine = AStarModified(self.graph)
 
         for point in self.points:
             res = engine.search(
@@ -128,7 +131,7 @@ class Tabu:
         return max(min_tabu, tabu_length - 1)
 
     def _tabu_search(
-        self, tabu_length=10, aspiration=True, sample_size=None, max_no_improve=10
+        self, tabu_length=0, aspiration=False, sample_size=None, max_no_improve=10
     ):
         tabu_list, current_solution, best_solution, best_cost = self._initialize_search(
             tabu_length
